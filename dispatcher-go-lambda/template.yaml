@@ -1,0 +1,53 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  dispatcher-go-lambda
+  
+  Sample SAM Template for dispatcher-go-lambda
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 5
+    MemorySize: 128
+
+Resources:
+  HelloWorldFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      CodeUri: hello-world/
+      Handler: bootstrap
+      Runtime: provided.al2023
+      Architectures:
+        - x86_64
+      Environment:
+        Variables:
+          NEW_RELIC_APP_NAME: "dispatcher-go-lambda"
+          NEW_RELIC_LOG_ENABLED: "true"
+          NEW_RELIC_LOG: "stdout"
+          NEW_RELIC_LOG_LEVEL: "info"
+          NEW_RELIC_NO_CONFIG_FILE: "true"
+          NEW_RELIC_ACCOUNT_ID: "your-account-id"
+          NEW_RELIC_SERVERLESS_MODE_ENABLED: "true"
+          NEW_RELIC_LICENSE_KEY: "your-license-key"
+          NEW_RELIC_EXTENSION_SEND_FUNCTION_LOGS: "true"
+          NEW_RELIC_EXTENSION_SEND_EXTENSION_LOGS: "true"
+          NEW_RELIC_EXTENSION_LOG_LEVEL: "INFO"
+      Layers:
+        # This layer includes the New Relic Lambda Extension, a sidecar process that sends telemetry
+        - !Sub arn:aws:lambda:us-east-1:451483290750:layer:NewRelicLambdaExtension:44
+      Policies:
+        # This policy allows the lambda to know the value of the New Relic licence key. We need this so
+        # that we can send telemetry back to New Relic
+        - AWSSecretsManagerGetSecretValuePolicy:
+            SecretArn: !ImportValue NewRelicLicenseKeySecret-NewRelic-LicenseKeySecretARN
+
+Outputs:
+  HelloWorldFunction:
+    Description: "First Lambda Function ARN"
+    Value: !GetAtt HelloWorldFunction.Arn
+  HelloWorldFunctionIamRole:
+    Description: "Implicit IAM Role created for Hello World function"
+    Value: !GetAtt HelloWorldFunctionRole.Arn
